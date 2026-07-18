@@ -61,6 +61,11 @@ class GhinClient:
     def revision_date(self) -> str | None:
         return self._golfer.get("rev_date") if self._golfer else None
 
+    @property
+    def raw_golfer_profile(self) -> dict[str, Any] | None:
+        """The full, unfiltered golfer profile dict from GHIN's login response."""
+        return self._golfer
+
     async def async_login(self) -> dict[str, Any]:
         """Log in and cache the session token + golfer profile."""
         payload = {
@@ -102,9 +107,25 @@ class GhinClient:
     async def async_get_scores_payload(self, limit: int = 1) -> dict[str, Any]:
         """Fetch recent scores plus summary stats. Requires a prior login.
 
-        Confirmed response shape:
-        {"scores": [...], "total_count": int, "highest_score": int,
-         "lowest_score": int, "average": float}
+        Confirmed response shape (as of 2026-07):
+        {
+          "recent_scores": {"scores": [...]},
+          "revision_scores": {"total_differential": float, "scores": [...]},
+          "9_hole_score": {"scores": [...]},
+          "deleted_scores": {"scores": [...]},
+          "score_history_stats": {
+            "total_count": int, "lowest_score": int,
+            "highest_score": int, "average": float
+          }
+        }
+
+        Each score dict is rich: differential, course/tee/slope/rating,
+        score_type (H/A/T), number_of_holes, exceptional flag, pcc
+        (Playing Conditions Calculation adjustment), penalty info,
+        hole_details (per-hole scores/pars/stroke allocation), and a
+        statistics block (putts/GIR/fairways) - though that block is only
+        populated if the golfer enters hole-by-hole stats when posting;
+        otherwise it's all zeros and not meaningful.
         """
         if not self._token or not self.ghin_number:
             await self.async_login()
@@ -138,8 +159,19 @@ class GhinClient:
     async def async_update(self) -> dict[str, Any]:
         """Full refresh: re-login (cheap) and fetch latest score + stats."""
         await self.async_login()
-        payload = await self.async_get_scores_payload(limit=1)
-        scores = payload.get("scores") or []
+        payload = await self.async_get_scores_payload(limit=20)
+
+        # Real shape nests scores under revision_scores; fall back to a
+        # flat "scores" key just in case a different request ever returns
+        # the simpler shape instead.
+        revision_scores = payload.get("revision_scores") or {}
+        scores = revision_scores.get("scores") or payload.get("scores") or []
+
+        stats = payload.get("score_history_stats") or {}
+        total_count = stats.get("total_count", payload.get("total_count"))
+        highest_score = stats.get("highest_score", payload.get("highest_score"))
+        lowest_score = stats.get("lowest_score", payload.get("lowest_score"))
+        average = stats.get("average", payload.get("average"))
 
         return {
             "handicap_index": self.handicap_index,
@@ -148,8 +180,9 @@ class GhinClient:
             "rev_date": self.revision_date,
             "ghin_number": self.ghin_number,
             "last_score": scores[0] if scores else None,
-            "total_count": payload.get("total_count"),
-            "highest_score": payload.get("highest_score"),
-            "lowest_score": payload.get("lowest_score"),
-            "average": payload.get("average"),
+            "recent_scores": scores,
+            "total_count": total_count,
+            "highest_score": highest_score,
+            "lowest_score": lowest_score,
+            "average": average,
         }

@@ -24,6 +24,7 @@ async def async_setup_entry(
             GhinLowHiSensor(coordinator, client, entry),
             GhinLastScoreSensor(coordinator, client, entry),
             GhinScoringAverageSensor(coordinator, client, entry),
+            GhinScoringTrendSensor(coordinator, client, entry),
         ]
     )
 
@@ -104,7 +105,8 @@ class GhinLastScoreSensor(GhinBaseSensor):
             return {}
         return {
             "played_at": last_score.get("played_at"),
-            "course_name": last_score.get("course_name"),
+            "course_name": last_score.get("course_name")
+            or last_score.get("facility_name"),
             "tee_name": last_score.get("tee_name"),
             "net_score": last_score.get("net_score"),
             "to_par": last_score.get("to_par_display_value"),
@@ -113,6 +115,14 @@ class GhinLastScoreSensor(GhinBaseSensor):
             "course_rating": last_score.get("course_rating"),
             "slope_rating": last_score.get("slope_rating"),
             "status": last_score.get("status"),
+            # Additional fields confirmed from the real GHIN payload:
+            "score_type": last_score.get("score_type_display_full"),
+            "number_of_holes": last_score.get("number_of_holes"),
+            "exceptional": last_score.get("exceptional"),
+            "posted_on_home_course": last_score.get("posted_on_home_course"),
+            "is_manual_entry": last_score.get("is_manual"),
+            "pcc_adjustment": last_score.get("pcc"),
+            "penalty": last_score.get("penalty"),
         }
 
 
@@ -134,4 +144,43 @@ class GhinScoringAverageSensor(GhinBaseSensor):
             "lowest_score": self.coordinator.data.get("lowest_score"),
             "highest_score": self.coordinator.data.get("highest_score"),
             "total_rounds_posted": self.coordinator.data.get("total_count"),
+        }
+
+
+class GhinScoringTrendSensor(GhinBaseSensor):
+    """Recent rounds as a chartable list, for apexcharts-card etc.
+
+    State is just the number of rounds in the trend window; the actual
+    data for charting lives in the `rounds` attribute as a list of
+    {played_at, adjusted_gross_score, differential, course_name} dicts,
+    newest first (matches whatever `limit` the coordinator fetches with,
+    currently up to 20 rounds).
+    """
+
+    _attr_name = "Scoring Trend"
+    _attr_icon = "mdi:chart-timeline-variant"
+
+    @property
+    def unique_id(self) -> str:
+        return f"{self._entry.entry_id}_scoring_trend"
+
+    @property
+    def native_value(self):
+        return len(self.coordinator.data.get("recent_scores") or [])
+
+    @property
+    def extra_state_attributes(self):
+        scores = self.coordinator.data.get("recent_scores") or []
+        return {
+            "rounds": [
+                {
+                    "played_at": s.get("played_at"),
+                    "adjusted_gross_score": s.get("adjusted_gross_score"),
+                    "differential": s.get("differential"),
+                    "net_score_differential": s.get("net_score_differential"),
+                    "course_name": s.get("course_name") or s.get("facility_name"),
+                    "number_of_holes": s.get("number_of_holes"),
+                }
+                for s in scores
+            ]
         }
