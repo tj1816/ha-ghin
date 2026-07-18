@@ -1,0 +1,42 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to GHIN",
+        "description": "Enter your GHIN.com login and the client token used by the GHIN web app. To find the token: open ghin.com in your browser, open DevTools \u2192 Network tab, log in, click the `golfer_login.json` request, and copy the `token` field from the Request Payload.",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "client_token": "Client token"
+        }
+      },
+      "reconfigure": {
+        "title": "Update GHIN connection",
+        "description": "Update your GHIN.com login or client token (for example, if GHIN has rotated the token and your sensors stopped updating).",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "client_token": "Client token"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email, password, or client token",
+      "cannot_connect": "Unable to reach GHIN",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This GHIN account is already configured",
+      "reconfigure_successful": "GHIN connection updated successfully"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval_hours": "Update interval (hours)"
+        }
+      }
+    }
+  }
+}
