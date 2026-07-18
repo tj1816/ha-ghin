@@ -1,12 +1,12 @@
 {
   "domain": "ghin",
   "name": "GHIN Golf Handicap",
-  "codeowners": ["@YOUR_GITHUB_USERNAME"],
+  "codeowners": ["@tj1816"],
   "config_flow": true,
-  "documentation": "https://github.com/YOUR_GITHUB_USERNAME/ha-ghin",
-  "issue_tracker": "https://github.com/YOUR_GITHUB_USERNAME/ha-ghin/issues",
+  "documentation": "https://github.com/tj1816/ha-ghin",
   "integration_type": "service",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/tj1816/ha-ghin/issues",
   "requirements": [],
   "version": "1.0.0"
 }
