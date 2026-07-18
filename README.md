@@ -13,12 +13,16 @@ This uses GHIN's own (unofficial, undocumented) API - the same one ghin.com's we
 
 ## Installation
 
-### Via HACS (recommended)
+### Via HACS (custom repository)
 
-1. In HACS, go to the three-dot menu → **Custom repositories**
-2. Add this repo URL, category **Integration**
-3. Search for "GHIN Golf Handicap" in HACS and install
-4. Restart Home Assistant
+This integration isn't in the official HACS default store (that requires a separate brand-assets submission), so it needs to be added as a custom repository:
+
+1. In HACS, go to the three-dot menu (top right) → **Custom repositories**
+2. Paste this repo's URL: `https://github.com/tj1816/ha-ghin`
+3. Set category to **Integration**
+4. Click **Add**
+5. Find "GHIN Golf Handicap" in HACS (it'll now show up under your installed/available custom repos, not the search-everyone-sees list) and install it
+6. Restart Home Assistant
 
 ### Manual
 
