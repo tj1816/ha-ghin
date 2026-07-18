@@ -150,11 +150,15 @@ class GhinScoringAverageSensor(GhinBaseSensor):
 class GhinScoringTrendSensor(GhinBaseSensor):
     """Recent rounds as a chartable list, for apexcharts-card etc.
 
-    State is just the number of rounds in the trend window; the actual
-    data for charting lives in the `rounds` attribute as a list of
-    {played_at, adjusted_gross_score, differential, course_name} dicts,
-    newest first (matches whatever `limit` the coordinator fetches with,
-    currently up to 20 rounds).
+    State is just the number of rounds in the trend window (always the
+    fetch `limit`, currently 20, once you have enough history - it's not
+    meant to be charted itself). The actual data for charting lives in
+    the `rounds` attribute: a list of round dicts, newest first, each
+    with played_at, adjusted_gross_score, differential,
+    scaled_up_differential (for 9-hole rounds scaled to be comparable to
+    18-hole rounds), course_name, number_of_holes, handicap_index (the
+    golfer's HI as of right after this round posted), and used (whether
+    this round counts toward the current HI calculation).
     """
 
     _attr_name = "Scoring Trend"
@@ -177,9 +181,12 @@ class GhinScoringTrendSensor(GhinBaseSensor):
                     "played_at": s.get("played_at"),
                     "adjusted_gross_score": s.get("adjusted_gross_score"),
                     "differential": s.get("differential"),
+                    "scaled_up_differential": s.get("scaled_up_differential"),
                     "net_score_differential": s.get("net_score_differential"),
                     "course_name": s.get("course_name") or s.get("facility_name"),
                     "number_of_holes": s.get("number_of_holes"),
+                    "handicap_index": s.get("handicap_index"),
+                    "used": s.get("used"),
                 }
                 for s in scores
             ]
